@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding WooCommerce Order Columns</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 0;
+        }
+        main {
+            padding: 20px;
+            text-align: left;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        pre {
+            background-color: #e1e1e1;
+            padding: 10px;
+            border-left: 5px solid #4CAF50;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Understanding WooCommerce Order Columns</h1>
+    </header>
+    <main>
+        <h2>Introduction</h2>
+        <p>This blog post explains a WordPress code snippet used to add a custom column to the WooCommerce orders list table. The custom column displays the total quantity of items in each order.</p>
+        
+        <h2>Code Breakdown</h2>
+        <p>Here's a breakdown of the provided PHP code:</p>
+        
+        <h3>1. Adding the Custom Column</h3>
+        <pre><code>
+// legacy – for CPT-based orders
+add_filter( 'manage_edit-shop_order_columns', 'misha_order_items_column' );
+// for HPOS-based orders
+add_filter( 'manage_woocommerce_page_wc-orders_columns', 'misha_order_items_column' );
+
+function misha_order_items_column( $columns ) {
+    // let's add our column before "Total"
+    $columns = array_slice( $columns, 0, 4, true ) // 4 columns before
+    + array( 'order_products' => 'Quantity' ) // our column is going to be 5th
+    + array_slice( $columns, 4, NULL, true );
+
+    return $columns;
+}
+        </code></pre>
+        <p>The code snippet uses two filters to add a custom column titled "Quantity" to the WooCommerce orders list. It ensures compatibility with both CPT-based and HPOS-based orders by adjusting the columns array.</p>
+
+        <h3>2. Populating the Custom Column</h3>
+        <pre><code>
+// legacy – for CPT-based orders
+add_action( 'manage_shop_order_posts_custom_column', 'misha_populate_order_items_column', 25, 2 );
+// for HPOS-based orders
+add_action( 'manage_woocommerce_page_wc-orders_custom_column', 'misha_populate_order_items_column', 25, 2 );
+
+function misha_populate_order_items_column( $column_name, $order_or_order_id ) {
+    // legacy CPT-based order compatibility
+    $order = $order_or_order_id instanceof WC_Order ? $order_or_order_id : wc_get_order( $order_or_order_id );
+
+    if( 'order_products' === $column_name ) {
+        $items = $order->get_items();
+        if( ! is_wp_error( $items ) ) {
+            $total_quantity = 0;
+            foreach( $items as $item ) {
+                $total_quantity += $item->get_quantity();
+            }
+            echo $total_quantity;
+        }
+    }
+}
+        </code></pre>
+        <p>This function is used to populate the custom "Quantity" column with the total quantity of items in each order. It retrieves the order items, calculates the total quantity, and displays it in the column.</p>
+        
+        <h2>Conclusion</h2>
+        <p>By adding and populating a custom column in the WooCommerce orders list, you can enhance your order management interface and quickly view the total quantities of items in each order.</p>
+    </main>
+    <footer>
+        <p>&copy; 2024 My Tech Blog</p>
+    </footer>
+</body>
+</html>
